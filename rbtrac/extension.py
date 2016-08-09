@@ -53,4 +53,9 @@ class TracAuthBackend(AuthBackend):
             user.set_unusable_password()
             user.save()
 
+        session = DetachedSession(env=self.env, sid=username)
+        if "email" in session:
+            user.email = session["email"]
+            user.save()
+
         return user
