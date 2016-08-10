@@ -45,7 +45,8 @@ class TracAuthBackend(AuthBackend):
         self.env = Environment(path=trac_env_path)
 
     def authenticate(self, username, password):
-        return None
+        # TODO: authenticate the user
+        return self.get_or_create_user(username, password=password)
 
     def get_or_create_user(self, username, request=None, password=None):
         user, is_new = User.objects.get_or_create(username=username)
