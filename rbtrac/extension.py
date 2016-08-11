@@ -28,7 +28,7 @@ class TracExtension(Extension):
 class TracAuthSettingsForm(SiteSettingsForm):
     auth_tracauth_trac_env_path = forms.CharField(
         label="Trac environment path",
-        help_text="Path to the local Trac environment directory",
+        help_text="Path to the local Trac environment directory e.g. /var/trac/projects/sandbox",
         required=False)
 
     class Meta:
