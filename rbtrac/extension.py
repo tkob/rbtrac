@@ -47,18 +47,19 @@ class TracAuthBackend(AuthBackend):
     name = 'Trac Authentication'
     settings_form = TracAuthSettingsForm
 
-    def __init__(self):
-        self.siteconfig = SiteConfiguration.objects.get_current()
+    def __init__(self, siteconfig=None):
+        siteconfig = siteconfig or SiteConfiguration.objects.get_current()
+        self.siteconfig = siteconfig
 
         self.env = None
-        trac_env_path = self.siteconfig.get('auth_tracauth_trac_env_path')
+        trac_env_path = siteconfig.get('auth_tracauth_trac_env_path')
         if trac_env_path != "":
             try:
                 self.env = Environment(path=trac_env_path)
             except TracError, e:
                 logging.error(e)
 
-        self.login_url = str(self.siteconfig.get('auth_tracauth_trac_login_url'))
+        self.login_url = str(siteconfig.get('auth_tracauth_trac_login_url'))
         self.curl = pycurl.Curl()
 
     def authenticate(self, username, password):
