@@ -42,12 +42,16 @@ class TracAuthSettingsForm(SiteSettingsForm):
     class Meta:
         title = "Trac Auth Backend Settings"
 
+class TracEnvFactory():
+    def create(self, path):
+        return Environment(path=path)
+
 class TracAuthBackend(AuthBackend):
     backend_id = 'tkob_tracauth'
     name = 'Trac Authentication'
     settings_form = TracAuthSettingsForm
 
-    def __init__(self, siteconfig=None):
+    def __init__(self, siteconfig=None, env_factory=TracEnvFactory()):
         siteconfig = siteconfig or SiteConfiguration.objects.get_current()
         self.siteconfig = siteconfig
 
@@ -55,7 +59,7 @@ class TracAuthBackend(AuthBackend):
         trac_env_path = siteconfig.get('auth_tracauth_trac_env_path')
         if trac_env_path != "":
             try:
-                self.env = Environment(path=trac_env_path)
+                self.env = env_factory.create(path=trac_env_path)
             except TracError, e:
                 logging.error(e)
 
