@@ -13,7 +13,9 @@ from reviewboard.extensions.base import Extension
 from reviewboard.extensions.hooks import AuthBackendHook
 from trac.env import Environment
 from trac.web.session import DetachedSession
-
+import logging
+import pycurl
+import sys
 
 class TracExtension(Extension):
     metadata = {
@@ -26,6 +28,11 @@ class TracExtension(Extension):
         AuthBackendHook(self, TracAuthBackend)
 
 class TracAuthSettingsForm(SiteSettingsForm):
+    auth_tracauth_trac_login_url = forms.CharField(
+        label="Trac login URL",
+        help_text="e.g. http://localhost/trac/sandbox/login",
+        required=True)
+
     auth_tracauth_trac_env_path = forms.CharField(
         label="Trac environment path",
         help_text="Path to the local Trac environment directory e.g. /var/trac/projects/sandbox",
@@ -43,10 +50,30 @@ class TracAuthBackend(AuthBackend):
         self.siteconfig = SiteConfiguration.objects.get_current()
         trac_env_path = self.siteconfig.get('auth_tracauth_trac_env_path')
         self.env = Environment(path=trac_env_path)
+        self.login_url = str(self.siteconfig.get('auth_tracauth_trac_login_url'))
+        self.curl = pycurl.Curl()
 
     def authenticate(self, username, password):
-        # TODO: authenticate the user
-        return self.get_or_create_user(username, password=password)
+        logging.debug('authenticate: username=%s, login_url=%s'
+                % (username, self.login_url))
+        try:
+            curl = self.curl
+            curl.setopt(pycurl.URL, self.login_url)
+            curl.setopt(pycurl.HTTPAUTH, pycurl.HTTPAUTH_ANY)
+            curl.setopt(pycurl.USERPWD, str('%s:%s' % (username, password)))
+            curl.perform()
+            status = curl.getinfo(pycurl.HTTP_CODE)
+            logging.debug("authenticate: status=%d" % status)
+        except:
+            logging.error(sys.exc_info())
+            raise
+
+        if status == 200:
+            logging.debug('authenticate: username=%d, success' % username)
+            return self.get_or_create_user(username, password=password)
+        else:
+            logging.debug('authenticate: username=%d, fail' % username)
+            return None
 
     def get_or_create_user(self, username, request=None, password=None):
         user, is_new = User.objects.get_or_create(username=username)
