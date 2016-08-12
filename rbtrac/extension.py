@@ -69,10 +69,10 @@ class TracAuthBackend(AuthBackend):
             raise
 
         if status == 200:
-            logging.debug('authenticate: username=%d, success' % username)
+            logging.debug('authenticate: username=%s, success' % username)
             return self.get_or_create_user(username, password=password)
         else:
-            logging.debug('authenticate: username=%d, fail' % username)
+            logging.debug('authenticate: username=%s, fail' % username)
             return None
 
     def get_or_create_user(self, username, request=None, password=None):
