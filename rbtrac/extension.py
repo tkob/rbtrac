@@ -11,6 +11,7 @@ from djblets.siteconfig.models import SiteConfiguration
 from reviewboard.accounts.backends import AuthBackend
 from reviewboard.extensions.base import Extension
 from reviewboard.extensions.hooks import AuthBackendHook
+from trac.core import TracError
 from trac.env import Environment
 from trac.web.session import DetachedSession
 import logging
@@ -48,8 +49,15 @@ class TracAuthBackend(AuthBackend):
 
     def __init__(self):
         self.siteconfig = SiteConfiguration.objects.get_current()
+
+        self.env = None
         trac_env_path = self.siteconfig.get('auth_tracauth_trac_env_path')
-        self.env = Environment(path=trac_env_path)
+        if trac_env_path != "":
+            try:
+                self.env = Environment(path=trac_env_path)
+            except TracError, e:
+                logging.error(e)
+
         self.login_url = str(self.siteconfig.get('auth_tracauth_trac_login_url'))
         self.curl = pycurl.Curl()
 
@@ -66,7 +74,6 @@ class TracAuthBackend(AuthBackend):
             logging.debug("authenticate: status=%d" % status)
         except:
             logging.error(sys.exc_info())
-            raise
 
         if status == 200:
             logging.debug('authenticate: username=%s, success' % username)
@@ -81,9 +88,10 @@ class TracAuthBackend(AuthBackend):
             user.set_unusable_password()
             user.save()
 
-        session = DetachedSession(env=self.env, sid=username)
-        if "email" in session:
-            user.email = session["email"]
-            user.save()
+        if self.env != None:
+            session = DetachedSession(env=self.env, sid=username)
+            if "email" in session:
+                user.email = session["email"]
+                user.save()
 
         return user
