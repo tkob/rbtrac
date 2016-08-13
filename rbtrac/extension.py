@@ -89,7 +89,7 @@ class TracAuthBackend(AuthBackend):
             return None
 
     def get_or_create_user(self, username, request=None):
-        user, is_new = User.objects.get_or_create(username=username)
+        user, is_new = self._get_or_create(username=username)
         if is_new:
             user.set_unusable_password()
             user.save()
@@ -101,3 +101,6 @@ class TracAuthBackend(AuthBackend):
                 user.save()
 
         return user
+
+    def _get_or_create(self, username):
+        return User.objects.get_or_create(username=username)
