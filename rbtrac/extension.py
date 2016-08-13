@@ -79,6 +79,7 @@ class TracAuthBackend(AuthBackend):
             logging.debug("authenticate: status=%d" % status)
         except:
             logging.error(sys.exc_info())
+            return None
 
         if status == 200:
             logging.debug('authenticate: username=%s, success' % username)
