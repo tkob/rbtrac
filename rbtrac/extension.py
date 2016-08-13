@@ -95,7 +95,7 @@ class TracAuthBackend(AuthBackend):
             user.save()
 
         if self.env != None:
-            session = DetachedSession(env=self.env, sid=username)
+            session = self._create_session(username)
             if "email" in session:
                 user.email = session["email"]
                 user.save()
@@ -104,3 +104,6 @@ class TracAuthBackend(AuthBackend):
 
     def _get_or_create(self, username):
         return User.objects.get_or_create(username=username)
+
+    def _create_session(self, username):
+        return DetachedSession(env=self.env, sid=username)
